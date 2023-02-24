@@ -1,4 +1,10 @@
-# Need to do cross validation to compute score
+"""Data Preparation: Start by collecting your data in a matrix format, where the columns 
+represent the observed variables and the rows represent the individual observations. 
+You should also center and scale your data so that each variable has a mean of 0 and a standard 
+deviation of 1.
+
+TODO:
++ Ensure to do cross validation to compute score"""
 
 import numpy as np
 from sklearn.decomposition import FactorAnalysis
@@ -27,3 +33,4 @@ axs.imshow(W.T, interpolation='none')
 axs.set_ylabel('Neuron')
 axs.set_xlabel('Factor')
 plt.show()
+
