@@ -1,6 +1,13 @@
 # Import Libraries
 import numpy as np
 import random
+import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
+import pandas as pd
+import seaborn as sns
+
+random.seed(0)
+np.random.seed(0)
 
 class Generate_Synth_Data:
     def __init__(self, 
@@ -18,11 +25,12 @@ class Generate_Synth_Data:
         # Hard coded parameters
         self.bin_size = 0.1 # 100ms
         self.numBins = int(self.end_time_of_session/self.bin_size)
-        self.probabilityOFTunedNeurons = 0.2
+        self.probabilityOFTunedNeurons = 0.9
         
         # Funcs
         self.generate_unit_tunning()
         self.generate_event_times()
+        self.create_spikes()
         
     #Generate random times uniformly across the session
     def generate_event_times(self):
@@ -39,8 +47,9 @@ class Generate_Synth_Data:
     
         self.tunnedNeurons = np.random.choice([0, 1], size = self.numNeurons, p=[1-self.probabilityOFTunedNeurons, self.probabilityOFTunedNeurons])
         assert len(self.tunnedNeurons) == self.numNeurons, "Number of neurons is not equal to the number of neurons in the tunning array"
-        
-    def create_spikes_gama(self):
+    
+    # Generate a binned spike train for each neuron for each trial
+    def create_spikes(self):
         """
         Create synthetic spike trains using a gamma distribution of shape number of time bins
         """
@@ -55,12 +64,51 @@ class Generate_Synth_Data:
                     if self.tunnedNeurons[neuron] == 1 and (self.event_bin_idx[trial] == bin):
                         spike_matrix[bin, neuron, trial] += random.randint(10, 30)
                     
-        return spike_matrix
+        self.spike_matrix = spike_matrix
+    
+    def plot_spike_trains_per_trial(self, num_trials_to_plot: int, num_neurons_to_plot: int):
+        
+        fig = plt.figure(constrained_layout=True)
+        gs = GridSpec(nrows = num_trials_to_plot, 
+                      ncols = 2, 
+                      figure = fig)
+        
+        axs = [fig.add_subplot(gs[i, 0]) for i in range(num_trials_to_plot)]
+        crosscorr_axs = [fig.add_subplot(gs[i, 1]) for i in range(num_trials_to_plot)]
+        
+        for trial in range(num_trials_to_plot):
+            dataframe = pd.DataFrame(self.spike_matrix[:, :num_neurons_to_plot, trial])
+            sns.lineplot(data=dataframe, ax=axs[trial], legend=False)
+            axs[trial].axvline(x=self.event_bin_idx[trial], color='black', linestyle='-')
+            axs[trial].set_title(f'Trial {trial}')
+            
+            # Plot cross-correlogram
+            crosscorr = np.zeros((self.spike_matrix.shape[1], self.spike_matrix.shape[1]))
+            for neuron1 in range(self.spike_matrix.shape[1]):
+                for neuron2 in range(neuron1+1, self.spike_matrix.shape[1]):
+                    crosscorr[neuron1, neuron2] = np.correlate(self.spike_matrix[:, neuron1, trial], self.spike_matrix[:, neuron2, trial], mode='full')[len(self.spike_matrix)-1]
+                    crosscorr[neuron2, neuron1] = crosscorr[neuron1, neuron2]
+            sns.heatmap(data=crosscorr, ax=crosscorr_axs[trial], cmap='coolwarm', cbar=True)
+            crosscorr_axs[trial].set_title(f'Trial {trial} ')
+            # crosscorr_axs[trial].set_xlabel('Neuron 1')
+            # crosscorr_axs[trial].set_ylabel('Neuron 2')
+        
+        plt.show()
+        
+
+
     
 synthObj = Generate_Synth_Data(end_time_of_session = 10, 
                                synthetic_trial_number = 100, 
                                number_of_artificial_spikes = 1000,
-                               number_of_neurons = 25)
+                               number_of_neurons = 5)
 
-spikes = synthObj.create_spikes_gama()
 
+synthObj.plot_spike_trains_per_trial(num_trials_to_plot = 4, num_neurons_to_plot = 6)
+
+# trial = 2
+# dataframe = pd.DataFrame(spikes[:, :, trial])
+# sns.lineplot(data=dataframe)
+# plt.axvline(x=synthObj.event_bin_idx[trial], color='black', linestyle='-')
+# plt.tight_layout()
+# plt.show()
