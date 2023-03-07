@@ -4,12 +4,14 @@ import random
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import pandas as pd
+import seaborn as sns
+from scipy.ndimage.filters import gaussian_filter1d
 
 class Generate_Synth_Data:
     def __init__(self, 
-                 number_of_neurons = 10, 
+                 number_of_neurons = 3, 
                  number_of_stimuli = 1, 
-                 number_of_tuned_neurons = 5,
+                 number_of_tuned_neurons = 2,
                  number_of_trials = 650,
                  length_of_trial = 10, # seconds
                  bin_size = 0.1): # seconds 
@@ -21,13 +23,15 @@ class Generate_Synth_Data:
         self.number_of_trials = number_of_trials
         self.length_of_trial = length_of_trial
         self.bin_size = bin_size
+        self.number_of_bins = int(self.length_of_trial / self.bin_size)
+        self.time = np.arange(0, self.length_of_trial, self.bin_size)
         
         # Funcs
+        self.generate_event_times()
         self.stimMatrix = self.generate_neuron_stim_weight_matrix()
         self.spikeTrains = self.generate_spike_events_for_all_neurons_and_trials()
+        self.plot_spike_events(1)
         
-        print(self.spikeTrains)
-
     def generate_neuron_stim_weight_matrix(self) -> np.ndarray:
         """
         This functions creates a matrix of shape (Neuron #, Stimulus #). Where each N_i, S_j decides 
@@ -44,31 +48,53 @@ class Generate_Synth_Data:
         
         return stimMatrix
     
+    def generate_event_times(self) -> None:
+        """
+        Generate random stim times uniformly across the session from the start of a trial to the end of a trial
+        Returns an array of len(number_of_trials)
+        """
+        self.event_bin_idx = np.random.randint(0, self.number_of_bins + 1, size = self.number_of_trials)
+        
     def generate_spike_events_for_a_trial(self) -> np.ndarray:
         """
         This function generates the spike events for one neuron. The spike events are generated
         using a poisson process. The rate of the poisson process is determined by the tuning weights.
         """
-        length = self.length_of_trial / self.bin_size
-        arr = np.full(shape = int(length), fill_value = self.bin_size) # Generate an array of identical bin values for the poisson process
+        arr = np.full(shape = self.number_of_bins, fill_value = self.bin_size) # Generate an array of identical bin values for the poisson process
         lam = 15 # Event occurance rate
         
         # Poisson process
         spikeEvents = np.random.poisson(lam*arr)
+        
         return spikeEvents # How many spikes occured in each bin for one trial one neuron
     
     def generate_spike_events_for_all_neurons_and_trials(self) -> np.ndarray:
         """
-        Generate spike events but for each neuron and each trial
+        Generate spike events but for each neuron and each trial of shape (Bin #, Neuron #, Trial #)
         """
-        spikeTrains = np.zeros((self.length_of_trial, self.number_of_neurons, self.number_of_trials))
+        spikeTrains = np.zeros((self.number_of_bins, self.number_of_neurons, self.number_of_trials))
         
         for trial in range(self.number_of_trials):
-            for neuron in range(self.number_of_neurons):
+            for neuron in range(self.number_of_neurons):                
                 spikeTrains[:, neuron, trial] = self.generate_spike_events_for_a_trial()
         
         return spikeTrains
+    
+    def plot_spike_events(self, trial):
+        """
+        Plot the spike events for a trial after converting the spike events to a dataframe
+        """
+        dataframe = pd.DataFrame(self.spikeTrains[:, :, trial])
+        dataframe.columns = [f"Neuron {neuron}" for neuron in range(self.number_of_neurons)]
         
+        # apply the Gaussian filter
+        sigma = 2  # set the standard deviation of the Gaussian filter
+        for col in dataframe.columns:
+            dataframe[col] = gaussian_filter1d(dataframe[col], sigma=sigma)
+        
+        sns.lineplot(data = dataframe)
+        plt.show()
+
 if __name__ == "__main__":
     
     # Prevent the random number generator from changing
