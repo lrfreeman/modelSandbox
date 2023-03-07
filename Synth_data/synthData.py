@@ -25,6 +25,7 @@ class Generate_Synth_Data:
         self.bin_size = bin_size
         self.number_of_bins = int(self.length_of_trial / self.bin_size)
         self.time = np.arange(0, self.length_of_trial, self.bin_size)
+        self.rate_parameter = 15 # Event occurance rate
         
         # Funcs
         self.generate_event_times()
@@ -53,7 +54,7 @@ class Generate_Synth_Data:
         Generate random stim times uniformly across the session from the start of a trial to the end of a trial
         Returns an array of len(number_of_trials)
         """
-        self.event_bin_idx = np.random.randint(0, self.number_of_bins + 1, size = self.number_of_trials)
+        self.event_bin_idx = np.random.randint(0, self.number_of_bins, size = self.number_of_trials)
         
     def generate_spike_events_for_a_trial(self) -> np.ndarray:
         """
@@ -61,11 +62,8 @@ class Generate_Synth_Data:
         using a poisson process. The rate of the poisson process is determined by the tuning weights.
         """
         arr = np.full(shape = self.number_of_bins, fill_value = self.bin_size) # Generate an array of identical bin values for the poisson process
-        lam = 15 # Event occurance rate
-        
-        # Poisson process
-        spikeEvents = np.random.poisson(lam*arr)
-        
+        spikeEvents = np.random.poisson(self.rate_parameter * arr) # Poisson process
+
         return spikeEvents # How many spikes occured in each bin for one trial one neuron
     
     def generate_spike_events_for_all_neurons_and_trials(self) -> np.ndarray:
@@ -73,10 +71,23 @@ class Generate_Synth_Data:
         Generate spike events but for each neuron and each trial of shape (Bin #, Neuron #, Trial #)
         """
         spikeTrains = np.zeros((self.number_of_bins, self.number_of_neurons, self.number_of_trials))
-        
+                
         for trial in range(self.number_of_trials):
-            for neuron in range(self.number_of_neurons):                
-                spikeTrains[:, neuron, trial] = self.generate_spike_events_for_a_trial()
+            
+            stimBin = self.event_bin_idx[trial] # Get the bin index of the stimulus
+            # stimTime = self.event_bin_idx[trial] / self.bin_size # Convert the bin index to time
+                        
+            for neuron in range(self.number_of_neurons):
+                
+                # If the neuron is not tuned to the stimulus
+                if self.stimMatrix[neuron] == 0:
+                    spikeTrains[:, neuron, trial] = self.generate_spike_events_for_a_trial()
+                
+                # # If the neuron is tuned to the stimulus
+                # # TODO: Add the stimulus bump poisson process
+                elif self.stimMatrix[neuron] != 0:
+                    spikeTrains[:, neuron, trial] = self.generate_spike_events_for_a_trial()
+                    spikeTrains[:, neuron, trial][stimBin] = spikeTrains[:, neuron, trial][stimBin] + np.random.poisson(self.rate_parameter * 10 * 0.1) # Add the stimulus bump poisson process
         
         return spikeTrains
     
@@ -87,18 +98,23 @@ class Generate_Synth_Data:
         dataframe = pd.DataFrame(self.spikeTrains[:, :, trial])
         dataframe.columns = [f"Neuron {neuron}" for neuron in range(self.number_of_neurons)]
         
+        # When was the stimulus presented
+        stimIdx = self.event_bin_idx[trial]
+        
         # apply the Gaussian filter
         sigma = 2  # set the standard deviation of the Gaussian filter
         for col in dataframe.columns:
             dataframe[col] = gaussian_filter1d(dataframe[col], sigma=sigma)
         
         sns.lineplot(data = dataframe)
+        plt.axvline(x=stimIdx, color='red')
         plt.show()
 
 if __name__ == "__main__":
     
     # Prevent the random number generator from changing
-    random.seed(0)
+    # random.seed(0)
+    # np.random.seed(0)
     
     # Gem the data
     synthObj = Generate_Synth_Data()
