@@ -10,7 +10,7 @@ def homogeneous_poisson_process(lam, T):
     times = []
 
     while True:
-        u = np.random.uniform(0, 1)
+        u = np.random.uniform(low = 0.01, high = 1)
         w = -np.log(u) / lam # So that w ~ Exp(λ)
         tn = t0 + w
 
