@@ -2,5 +2,6 @@ Point process for synthetic spike generation. An implementation of algorith 1 fr
 
 ![image](https://user-images.githubusercontent.com/22481774/225701596-b2d0109e-9ed9-4157-870b-340be972df87.png)
 
+Spike raster plot for single synethic neuron. 
 
 ![image](https://user-images.githubusercontent.com/22481774/225701219-5c663844-b906-4448-b8ce-efc4faa50d8e.png)
