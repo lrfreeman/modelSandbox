@@ -16,20 +16,22 @@ def homogeneous_poisson_process(lam, T):
 
         if tn > T:
             return times
+        
         else:
             n += 1
             t0 = tn
             times.append(tn)
+            
+if __name__ == "__main__":
 
-# Example usage:
-lam = 3.0  # Rate λ
-T = 10.0   # Time interval [0, T]
-result = homogeneous_poisson_process(lam, T)
+    # Example usage:
+    lam = 1.0  # Rate λ
+    T = 10.0   # Time interval [0, T]
+    result = homogeneous_poisson_process(lam, T)
 
-# plot the result
-time = np.arange(0.0, T, 0.01)
-plt.eventplot(result)
-plt.xlabel("Time")
-plt.yticks([]) # Remove the y-axis ticks
-plt.title(f"Homogeneous Poisson process (λ = {lam}, T = {T})")
-plt.show()
+    # plot the result
+    plt.eventplot(result)
+    plt.xlabel("Time")
+    plt.yticks([]) # Remove the y-axis ticks
+    plt.title(f"Homogeneous Poisson process (λ = {lam}, T = {T})")
+    plt.show()
