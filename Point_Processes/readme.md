@@ -6,6 +6,8 @@ Spike raster plot for single synethic neuron.
 
 ![image](https://user-images.githubusercontent.com/22481774/225701219-5c663844-b906-4448-b8ce-efc4faa50d8e.png)
 
-Combining algorithm 1 with a imhomogenous poisson process results in a suitable synthetic spike generator as seen below:
+Combining algorithm 1 with a imhomogenous poisson process (algo 2) results in a suitable synthetic spike generator as seen below:
+
+![image](https://user-images.githubusercontent.com/22481774/226041825-74f41df1-80c5-4554-ba10-1b2ad40f634b.png)
 
 ![image](https://user-images.githubusercontent.com/22481774/226041407-79eab35c-5d91-4415-92e6-49a6a8c28ea4.png)
