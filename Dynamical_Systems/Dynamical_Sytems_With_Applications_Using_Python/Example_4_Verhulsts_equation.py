@@ -19,6 +19,6 @@ print(sol)
 # result is a list of solutions to the ODE - 
 # Eq(p(t), B/(d*(1 - exp(B*(C1 - t)))))
 # This result can also be computed by hand 
-# test
+# This is very close to the logisitc equation
 
 # NOTE - When using dsolve the function such as P(t), x(t) must be written as such as not like P or x
